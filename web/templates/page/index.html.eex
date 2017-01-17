@@ -35,3 +35,12 @@
     </ul>
   </div>
 </div>
+
+<script>
+  $(document).ready(function() {
+    $('h4').on('click', function(e) {
+      var text = $(e.target).text();
+      alert('You clicked the ' + text + ' header.');
+    });
+  });
+</script>

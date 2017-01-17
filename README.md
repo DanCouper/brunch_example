@@ -203,4 +203,97 @@ Anyway, you should end up with something like this (I've added styling to the bu
 
 ![Button clicker in CoffeeScript](./cs.png)
 
-**Go to the `step4/adding_global_scripts` branch for the next step →**
+
+### Global JS
+
+As a rule, JS modules and libraries should be manually imported/exported, for example,
+with JQuery
+
+```
+npm install --save jquery
+```
+
+And in a file where you want to use it:
+
+```
+import $ from 'jquery';
+
+$(mySelector).doSomethingJQueryish();
+```
+
+But you may want it to be global. Brunch provides for this.
+
+**NOTE** that you can also specify globals by explicitly attaching the
+variables in a file to `window`; this is often the easiest way to do it.
+
+> Again, it is **very** much advised to use `import` and explicitly use the import
+within the JS. Putting script calls into the HTML leads to extremely
+difficult-to-manage code; the fact Rails devs do this regularly is **not** a
+good reason to actually do it.
+
+To have a globally-available library, just put the file containing it in
+`web/static/vendor` (create it if it doesn't exist). The files will be copied
+across as-is, and concatenated onto `app.js`. This is useful for legacy code.
+So if you grab jQuery, you can just put the whole file in that folder, and you
+get your `$` globally.
+
+To avoid having to manually copy code, install the library from NPM
+(`npm install --save jquery`). Then, to make it available, in `brunch-config`,
+add a `globals` object like:
+
+```
+...
+  modules: {
+    autoRequire: {
+      "js/app.js": ["web/static/js/app"]
+    }
+  },
+
+  npm: {
+    enabled: true,
+    globals: {
+      $: 'jquery'
+    }
+  }
+...
+```
+
+This is the approach taken here.
+
+Again, test it is working. In `web/templates/page/index.html.eex`, add:
+
+```
+<script>
+  $(document).ready(function() {
+    $('h4').on('click', function(e) {
+      var text = $(e.target).text();
+      alert('You clicked the ' + text + ' header.');
+    });
+  });
+</script>
+```
+
+When this compiles, you'll notice it won't work. There will be an error in
+the console stating that `$` is not defined. So the script call could be moved
+to under the call in layout that imports `app.js`. But, assuming you want scripts
+as close to the code as possible (_again, here's an illustration of why inline
+scripts are bad..._), instead move this line in `web/templates/layouts/app.html.eex`
+from the foot of the document in to the `<head>`:
+
+```
+<script src="<%= static_path(@conn, "/js/app.js") %>"></script>
+```
+
+Now the button click script fails for similar reasons, so wrap that in a
+`$(document).ready` call:
+
+```
+// app.js
+$(document).ready(() => {
+  redButtonClicker(".big-red-button");
+});
+```
+
+Now everything should work.
+
+![jQuery call in HTML file](./jquery.png)
