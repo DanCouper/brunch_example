@@ -47,4 +47,4 @@ JS dependencies via NPM (the Node Package Manager). NPM dependencies (an config)
 is handled via the `package.json` file in the root of the project. Additional
 Brunch-specific config can be added to `brunch-config.js`.
 
-**Go to the v2 branch for the next step →**
+**Go to the `step2/using_scss` branch for the next step →**
