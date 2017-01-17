@@ -125,6 +125,82 @@ scheme:
 ![New colour scheme for Phoenix](./sass.png)
 
 
+### CoffeeScript
+
+Just like with Sass, add `coffee-script-brunch` plugin by running
+(in the root of the project):
+
+```
+npm install coffee-script-brunch --save-dev
+```
+
+Now you can write CS, and Brunch will compile it to JS. **However** you **must**
+`export` what you want to expose in your .coffee files, and `import` it into the main
+`app.js` file in `web/static/js/`. The `app.js` file is used as the entry point
+(similar to `application.js` in the Rails asset pipeline), and anything you
+want exposed should be present there (though exceptions can be forced my modifying
+  `brunch-config.js` - but I'll come to that).
+
+Again, it is simple to demonstrate that CS compilation is now functioning properly.
+
+Add a button to `web/templates/page/index.html.eex`:
+
+```
+<div class="jumbotron">
+  <h2><%= gettext "Welcome to %{name}", name: "Phoenix!" %></h2>
+  <p class="lead">A productive web framework that<br />does not compromise speed and maintainability.</p>
+  <!-- Button added here: -->
+  <button class="big-red-button">DON'T PRESS THIS BUTTON</button>
+</div>
+
+<div class="row marketing">
+  ...
+```
+
+Add a CoffeeScript file - `web/static/js/test.coffee`, and to that add:
+
+```
+alertButtonHandler = (e) ->
+  console.log("button clicked :(")
+  alert("You clicked the button.")
 
 
-**Go to the `step3/configuring_coffeescript` branch for the next step →**
+redButtonClicker = (el) ->
+  document.querySelector(el).addEventListener "click", alertButtonHandler
+
+module.exports =
+  redButtonClicker: redButtonClicker
+```
+
+**NOTE** the `module.exports = ...`. You **must** explicitly export what you're
+going to use - brunch won't magically do it for you. `app.js` is the entry point,
+and that file needs to know about those files (as with `application.js` in Rails).
+
+**NOTE** Although CoffeeScript now supports (ES6+) `import` and `export`
+declarations, using them throws an error; they don't get compiled down properly
+by Babel. This puts you in a somewhat similar situation to Rails, which is
+_waaay_ behind on JS modules. _I'll try to find a way around this - it seems
+to just be a case of the CoffeeScript files not going through Babel properly?? Should
+just be a case of altering the settings._
+
+```
+...
+import "phoenix_html";
+import { redButtonClicker } from "./test";
+
+redButtonClicker(".big-red-button");
+...
+```
+
+**NOTE** the `./` at the start of the imported file declaration - that indicates
+you're importing a local file. If you missed that off, it would be assumed you were
+were trying to import an installed NPM module, and errors would be thrown [as there
+isn't an NPM package called 'test']. Note also that the _export_ in `test.coffee`
+is a _default_ export - this allows the `import Test from ...`. For detail on
+options here regarding JS module imports/exports, read [this very good Stack Overflow reply](http://stackoverflow.com/questions/36795819/when-should-i-use-curly-braces-for-es6-import/36796281#36796281).
+
+Anyway, you should end up with something like this (I've added styling to the button):
+
+![Button clicker in CoffeeScript](./cs.png)
+
+**Go to the `step4/adding_global_scripts` branch for the next step →**

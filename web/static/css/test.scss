@@ -19,3 +19,12 @@ body {
   background-color: $disgusting-green;
   color: $normal-poo;
 }
+
+.big-red-button {
+  border-radius: 50%;
+  background-color: red;
+  color: $bluescreen-o-death;
+  height: 250px;
+  width: 250px;
+  line-height: 250px;
+}
