@@ -9,6 +9,17 @@ To start your Phoenix app:
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
+## TL/DR
+
+This is currently the default install for Phoenix. By going through the steps here,
+you will configure brunch to compile Scss and CoffeeScript, and bring in jQuery
+as a global dependency.
+
+1. Preparation.
+2. Adding Sass support.
+3. Adding CoffeeScript support.
+4. Adding jQuery and making it global.
+
 ## Configuring Brunch
 
 Brunch is very simple; it is a pure asset builder - it takes static JS/CSS/etc,
@@ -47,4 +58,253 @@ JS dependencies via NPM (the Node Package Manager). NPM dependencies (an config)
 is handled via the `package.json` file in the root of the project. Additional
 Brunch-specific config can be added to `brunch-config.js`.
 
-**Go to the `step2/using_scss` branch for the next step →**
+### Scss
+
+By default, Phoenix includes the `brunch-css` plugin, which is set up to take
+everything in `static/css`, concatenate it together, and spit it out as `app.css`
+in the `priv/static.css` directory. But you'd like to have variables and mixins
+and functions, so you want that Sass goodness.
+
+This step is simple - just install the `sass-brunch` plugin by running
+(in the root of the project):
+
+```
+npm install sass-brunch --save-dev
+```
+
+This will save it to `package.json` as a development dependency. Brunch automatically
+uses installed Brunch plugin dependencies, so you should now be able to author
+styles in `web/static/css` as `.scss` rather than `.css`.
+
+> **NOTE** I have had a few issues with this plugin - sometimes it ends up
+with the project just hanging, either on install, or when trying to run Phoenix.
+If this happens, manually delete the `node_modules/` folder in the project, and
+just run `npm install` again to rebuild it.
+
+
+You can test that everything is working by:
+
+1. converting `app.css` and `phoenix.css` to `app.scss` and `phoenix.scss` respectively.
+2. running `mix phoenix.server`
+
+Everything should look exactly the same as it did beforehand - Brunch will have
+compiled the Scss files to `priv/static/css/app.css`.
+
+You can add more Scss files in the `web/static/css` folder, and use them as normal.
+
+To demonstate `@import` and Sass variables functioning, create a file called
+`test.scss`, and at the top of `app.scss`, add
+
+```
+@import "test";
+```
+
+The import isn't strictly necessary - Brunch will just go ahead and compile your
+Scss files to CSS and put them all together, but explicitly importing means you
+can define what order they appear. The main `app` stylesheet is the last thing to
+be concatenated, so anything there will appear at the end of the final stylesheet.
+
+In `test`, add:
+
+```
+$disgusting-green: #56FF00;
+$bluescreen-o-death: #0010FF;
+$baby-poo: #6A7E25;
+$awful-pink: #FF00EF;
+$normal-poo: #806E28;
+
+body {
+  background-color: $bluescreen-o-death;
+  color: $awful-pink;
+  font-family: "Comic Sans", "Chalkboard", "Impact", monospaced;
+}
+
+.jumbotron {
+  background-color: $baby-poo;
+  font-family: "Papyrus", fantasy;
+}
+
+.main {
+  background-color: $disgusting-green;
+  color: $normal-poo;
+}
+```
+
+The live reload should kick in once you save, giving you a far superior colour
+scheme:
+
+![New colour scheme for Phoenix](./sass.png)
+
+
+### CoffeeScript
+
+Just like with Sass, add `coffee-script-brunch` plugin by running
+(in the root of the project):
+
+```
+npm install coffee-script-brunch --save-dev
+```
+
+Now you can write CS, and Brunch will compile it to JS. **However** you **must**
+`export` what you want to expose in your .coffee files, and `import` it into the main
+`app.js` file in `web/static/js/`. The `app.js` file is used as the entry point
+(similar to `application.js` in the Rails asset pipeline), and anything you
+want exposed should be present there (though exceptions can be forced my modifying
+  `brunch-config.js` - but I'll come to that).
+
+Again, it is simple to demonstrate that CS compilation is now functioning properly.
+
+Add a button to `web/templates/page/index.html.eex`:
+
+```
+<div class="jumbotron">
+  <h2><%= gettext "Welcome to %{name}", name: "Phoenix!" %></h2>
+  <p class="lead">A productive web framework that<br />does not compromise speed and maintainability.</p>
+  <!-- Button added here: -->
+  <button class="big-red-button">DON'T PRESS THIS BUTTON</button>
+</div>
+
+<div class="row marketing">
+  ...
+```
+
+Add a CoffeeScript file - `web/static/js/test.coffee`, and to that add:
+
+```
+alertButtonHandler = (e) ->
+  console.log("button clicked :(")
+  alert("You clicked the button.")
+
+
+redButtonClicker = (el) ->
+  document.querySelector(el).addEventListener "click", alertButtonHandler
+
+module.exports =
+  redButtonClicker: redButtonClicker
+```
+
+**NOTE** the `module.exports = ...`. You **must** explicitly export what you're
+going to use - brunch won't magically do it for you. `app.js` is the entry point,
+and that file needs to know about those files (as with `application.js` in Rails).
+
+**NOTE** Although CoffeeScript now supports (ES6+) `import` and `export`
+declarations, using them throws an error; they don't get compiled down properly
+by Babel. This puts you in a somewhat similar situation to Rails, which is
+_waaay_ behind on JS modules. _I'll try to find a way around this - it seems
+to just be a case of the CoffeeScript files not going through Babel properly?? Should
+just be a case of altering the settings._
+
+```
+...
+import "phoenix_html";
+import { redButtonClicker } from "./test";
+
+redButtonClicker(".big-red-button");
+...
+```
+
+**NOTE** the `./` at the start of the imported file declaration - that indicates
+you're importing a local file. If you missed that off, it would be assumed you were
+were trying to import an installed NPM module, and errors would be thrown [as there
+isn't an NPM package called 'test']. Note also that the _export_ in `test.coffee`
+is a _default_ export - this allows the `import Test from ...`. For detail on
+options here regarding JS module imports/exports, read [this very good Stack Overflow reply](http://stackoverflow.com/questions/36795819/when-should-i-use-curly-braces-for-es6-import/36796281#36796281).
+
+Anyway, you should end up with something like this (I've added styling to the button):
+
+![Button clicker in CoffeeScript](./cs.png)
+
+
+### Global JS
+
+As a rule, JS modules and libraries should be manually imported/exported, for example,
+with JQuery
+
+```
+npm install --save jquery
+```
+
+And in a file where you want to use it:
+
+```
+import $ from 'jquery';
+
+$(mySelector).doSomethingJQueryish();
+```
+
+But you may want it to be global. Brunch provides for this.
+
+**NOTE** that you can also specify globals by explicitly attaching the
+variables in a file to `window`; this is often the easiest way to do it.
+
+> Again, it is **very** much advised to use `import` and explicitly use the import
+within the JS. Putting script calls into the HTML leads to extremely
+difficult-to-manage code; the fact Rails devs do this regularly is **not** a
+good reason to actually do it.
+
+To have a globally-available library, just put the file containing it in
+`web/static/vendor` (create it if it doesn't exist). The files will be copied
+across as-is, and concatenated onto `app.js`. This is useful for legacy code.
+So if you grab jQuery, you can just put the whole file in that folder, and you
+get your `$` globally.
+
+To avoid having to manually copy code, install the library from NPM
+(`npm install --save jquery`). Then, to make it available, in `brunch-config`,
+add a `globals` object like:
+
+```
+...
+  modules: {
+    autoRequire: {
+      "js/app.js": ["web/static/js/app"]
+    }
+  },
+
+  npm: {
+    enabled: true,
+    globals: {
+      $: 'jquery'
+    }
+  }
+...
+```
+
+This is the approach taken here.
+
+Again, test it is working. In `web/templates/page/index.html.eex`, add:
+
+```
+<script>
+  $(document).ready(function() {
+    $('h4').on('click', function(e) {
+      var text = $(e.target).text();
+      alert('You clicked the ' + text + ' header.');
+    });
+  });
+</script>
+```
+
+When this compiles, you'll notice it won't work. There will be an error in
+the console stating that `$` is not defined. So the script call could be moved
+to under the call in layout that imports `app.js`. But, assuming you want scripts
+as close to the code as possible (_again, here's an illustration of why inline
+scripts are bad..._), instead move this line in `web/templates/layouts/app.html.eex`
+from the foot of the document in to the `<head>`:
+
+```
+<script src="<%= static_path(@conn, "/js/app.js") %>"></script>
+```
+
+Now the button click script fails for similar reasons, so wrap that in a
+`$(document).ready` call:
+
+```
+// app.js
+$(document).ready(() => {
+  redButtonClicker(".big-red-button");
+});
+```
+
+Now everything should work.
+
+![jQuery call in HTML file](./jquery.png)
