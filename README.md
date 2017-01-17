@@ -51,14 +51,14 @@ For this example project, I am assuming that Rails-like functionality is wanted,
 so automatic compilation of CoffeeScript for the scripts, and automatic compilation
 of Scss for the styles. I am also including a JS library globally (JQuery).
 
-### Preparation
+### 1. Preparation
 
 [Node must be installed](https://nodejs.org/en/). With Brunch, you will install
 JS dependencies via NPM (the Node Package Manager). NPM dependencies (an config)
 is handled via the `package.json` file in the root of the project. Additional
 Brunch-specific config can be added to `brunch-config.js`.
 
-### Scss
+### 2. Scss
 
 By default, Phoenix includes the `brunch-css` plugin, which is set up to take
 everything in `static/css`, concatenate it together, and spit it out as `app.css`
@@ -136,7 +136,7 @@ scheme:
 ![New colour scheme for Phoenix](./sass.png)
 
 
-### CoffeeScript
+### 3. CoffeeScript
 
 Just like with Sass, add `coffee-script-brunch` plugin by running
 (in the root of the project):
@@ -215,7 +215,7 @@ Anyway, you should end up with something like this (I've added styling to the bu
 ![Button clicker in CoffeeScript](./cs.png)
 
 
-### Global JS
+### 4. Global JS
 
 As a rule, JS modules and libraries should be manually imported/exported, for example,
 with JQuery
