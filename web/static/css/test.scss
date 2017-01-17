@@ -1,0 +1,21 @@
+$disgusting-green: #56FF00;
+$bluescreen-o-death: #0010FF;
+$baby-poo: #6A7E25;
+$awful-pink: #FF00EF;
+$normal-poo: #806E28;
+
+body {
+  background-color: $bluescreen-o-death;
+  color: $awful-pink;
+  font-family: "Comic Sans", "Chalkboard", "Impact", monospaced;
+}
+
+.jumbotron {
+  background-color: $baby-poo;
+  font-family: "Papyrus", fantasy;
+}
+
+.marketing {
+  background-color: $disgusting-green;
+  color: $normal-poo;
+}
